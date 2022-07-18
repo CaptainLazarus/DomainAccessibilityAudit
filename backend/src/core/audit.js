@@ -9,6 +9,7 @@ import AbortController from 'abort-controller';
 import Page from './page';
 import Domain from './domain';
 import AuditModel from '../models/audit.model';
+import fs from 'fs';
 
 const pageLoadTimeout = 60000;
 const headTimeout = 4000;
@@ -178,10 +179,13 @@ export default class Audit {
       tags = ['section508'];
     else
       tags = ['wcag2aa', 'wcag2a'];
-    this.aXeB = new AxeBuilder(this.driver)
+    
+    console.log("\n\n\nFilepath = " + __dirname+'/axe.js');
+    const axeSource = fs.readFileSync(__dirname+'/axe.js', 'utf-8');
+    this.aXeB = new AxeBuilder(this.driver , axeSource)
       .options({
         branding: {
-          application: "Domain Accessibility Audit"
+          application: "Enter Custom Branding Here"
         },
         resultTypes: ["violations"],
       })
