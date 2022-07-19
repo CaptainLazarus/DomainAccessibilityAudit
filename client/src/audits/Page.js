@@ -81,6 +81,9 @@ class Page extends Component {
             {this.state.page.violations.length === 0 &&
               <Alert variant="success">No violation</Alert>
             }
+
+            {/* this.state.page contains the violations in a specific page. Have a look. If you want additional information, have a look at db. db.pages.find()*/}
+            
             {this.state.page.violations
               .sort((v1, v2) => impacts.get(v2.impact) - impacts.get(v1.impact))
               .map(violation => (
@@ -88,6 +91,7 @@ class Page extends Component {
                   <tbody>
                     {/*<tr><th>Id</th><td className="code">{violation.id}</td></tr>*/}
                     <tr><th>Description</th><td>
+                      {/* violation is the variable that contains a specific violation */}
                       {violation.description + ' '}
                       <Button variant="info" size="xs" title="Open rule description on Deque's website"
                           onClick={e => window.open(violation.descLink, '_blank')}>
