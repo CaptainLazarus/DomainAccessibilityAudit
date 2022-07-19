@@ -8,6 +8,7 @@ import Audit from '../core/audit';
 import AuditModel from '../models/audit.model';
 import DomainModel from '../models/domain.model';
 import PageModel from '../models/page.model';
+const { AsyncParser , parseAsync} = require('json2csv')
 
 let runningAudits = [];
 
