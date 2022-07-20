@@ -2,13 +2,16 @@ import { pipeline, PassThrough } from 'stream';
 import { promisify } from 'util';
 import zlib from 'zlib';
 const ppipe = promisify(pipeline);
+const { AsyncParser, parseAsync } = require('json2csv')
+const fs = require('fs');
+const archiver = require('archiver');
+
 
 import { filterAudits, domainCreateAllowed, domainReadAllowed, domainDeleteAllowed } from '../core/permissions';
 import Audit from '../core/audit';
 import AuditModel from '../models/audit.model';
 import DomainModel from '../models/domain.model';
 import PageModel from '../models/page.model';
-const { AsyncParser , parseAsync} = require('json2csv')
 
 let runningAudits = [];
 
@@ -27,8 +30,8 @@ exports.get_audits = async (req, res) => {
   try {
     let audits = await AuditModel.find()
       .select('initialDomainName dateStarted nbCheckedURLs nbViolations')
-      .collation({locale:'en', strength: 2})
-      .sort({dateStarted: -1})
+      .collation({ locale: 'en', strength: 2 })
+      .sort({ dateStarted: -1 })
       .lean()
       .exec();
     audits = await filterAudits(req.user, audits);
@@ -40,7 +43,7 @@ exports.get_audits = async (req, res) => {
 
 exports.get_audit = async (req, res) => {
   const { auditId } = req.params;
-  if (typeof(auditId) != 'string' || !auditId.match(/^[0-9a-fA-F]{24}$/)) {
+  if (typeof (auditId) != 'string' || !auditId.match(/^[0-9a-fA-F]{24}$/)) {
     res.json({ success: false, error: "Missing or wrong audit id" });
     return;
   }
@@ -77,32 +80,32 @@ exports.start = async (req, res) => {
     res.json({ success: false, error: "No permission to create this audit." });
     return;
   }
-  if (typeof(firstURL) != 'string') {
+  if (typeof (firstURL) != 'string') {
     res.json({ success: false, error: "Missing or wrong parameter: firstURL" });
     return;
   }
-  if (typeof(standard) != 'string' ||
-      ['wcag2a', 'wcag2aa', 'wcag21aa', 'section508'].indexOf(standard) == -1) {
+  if (typeof (standard) != 'string' ||
+    ['wcag2a', 'wcag2aa', 'wcag21aa', 'section508'].indexOf(standard) == -1) {
     res.json({ success: false, error: "Missing or wrong parameter: standard" });
     return;
   }
-  if (typeof(checkSubdomains) != 'boolean') {
+  if (typeof (checkSubdomains) != 'boolean') {
     res.json({ success: false, error: "Missing or wrong parameter: checkSubdomains" });
     return;
   }
-  if (typeof(maxDepth) != 'number') {
+  if (typeof (maxDepth) != 'number') {
     res.json({ success: false, error: "Missing or wrong parameter: maxDepth" });
     return;
   }
-  if (typeof(maxPagesPerDomain) != 'number') {
+  if (typeof (maxPagesPerDomain) != 'number') {
     res.json({ success: false, error: "Missing or wrong parameter: maxPagesPerDomain" });
     return;
   }
-  if (typeof(sitemaps) != 'boolean') {
+  if (typeof (sitemaps) != 'boolean') {
     res.json({ success: false, error: "Missing or wrong parameter: sitemaps" });
     return;
   }
-  if (typeof(includeMatch) != 'string') {
+  if (typeof (includeMatch) != 'string') {
     res.json({ success: false, error: "Missing or wrong parameter: includeMatch" });
     return;
   }
@@ -114,11 +117,11 @@ exports.start = async (req, res) => {
       return;
     }
   }
-  if (typeof(browser) != 'string' || ['firefox', 'chrome'].indexOf(browser) == -1) {
+  if (typeof (browser) != 'string' || ['firefox', 'chrome'].indexOf(browser) == -1) {
     res.json({ success: false, error: "Missing or wrong parameter: browser" });
     return;
   }
-  if (typeof(postLoadingDelay) != 'number') {
+  if (typeof (postLoadingDelay) != 'number') {
     res.json({ success: false, error: "Missing or wrong parameter: postLoadingDelay" });
     return;
   }
@@ -126,25 +129,31 @@ exports.start = async (req, res) => {
   const newAudit = new Audit();
   runningAudits.push(newAudit);
   try {
-    const audit = await newAudit.start({ firstURL, standard, checkSubdomains,
-      maxDepth, maxPagesPerDomain, sitemaps, includeMatch, browser, postLoadingDelay });
+    const audit = await newAudit.start({
+      firstURL, standard, checkSubdomains,
+      maxDepth, maxPagesPerDomain, sitemaps, includeMatch, browser, postLoadingDelay
+    });
     res.json({ success: true, data: audit });
   } catch (err) {
-    res.json({ success: false,
-      error: typeof err == 'string' ? err : err.toString()});
+    res.json({
+      success: false,
+      error: typeof err == 'string' ? err : err.toString()
+    });
   }
 };
 
 exports.stop = (req, res) => {
   const { auditId } = req.params;
-  if (typeof(auditId) != 'string' || !auditId.match(/^[0-9a-fA-F]{24}$/)) {
+  if (typeof (auditId) != 'string' || !auditId.match(/^[0-9a-fA-F]{24}$/)) {
     res.json({ success: false, error: "Missing or wrong audit id" });
     return;
   }
   const rAudit = getRunningAudit(auditId);
   if (rAudit == null) {
-    res.json({ success: false, error:
-      "Could not find the audit, maybe it's not running anymore." });
+    res.json({
+      success: false, error:
+        "Could not find the audit, maybe it's not running anymore."
+    });
     return;
   }
   if (!domainCreateAllowed(req.user, rAudit.initialDomainName)) {
@@ -158,7 +167,7 @@ exports.stop = (req, res) => {
 
 exports.remove_audit = async (req, res) => {
   const { auditId } = req.params;
-  if (typeof(auditId) != 'string' || !auditId.match(/^[0-9a-fA-F]{24}$/)) {
+  if (typeof (auditId) != 'string' || !auditId.match(/^[0-9a-fA-F]{24}$/)) {
     res.json({ success: false, error: "Missing or wrong audit id" });
     return;
   }
@@ -177,8 +186,8 @@ exports.remove_audit = async (req, res) => {
     return;
   }
   try {
-    await PageModel.deleteMany({auditId: auditId});
-    await DomainModel.deleteMany({auditId: auditId});
+    await PageModel.deleteMany({ auditId: auditId });
+    await DomainModel.deleteMany({ auditId: auditId });
     await AuditModel.deleteOne({ _id: auditId });
     res.json({ success: true, data: {} });
   } catch (err) {
@@ -188,14 +197,16 @@ exports.remove_audit = async (req, res) => {
 
 exports.get_audit_status = (req, res) => {
   const { auditId } = req.params;
-  if (typeof(auditId) != 'string' || !auditId.match(/^[0-9a-fA-F]{24}$/)) {
+  if (typeof (auditId) != 'string' || !auditId.match(/^[0-9a-fA-F]{24}$/)) {
     res.json({ success: false, error: "Missing or wrong audit id" });
     return;
   }
   const rAudit = getRunningAudit(auditId);
   if (rAudit == null) {
-    res.json({ success: false, error:
-      "Could not find the audit, maybe it's not running anymore." });
+    res.json({
+      success: false, error:
+        "Could not find the audit, maybe it's not running anymore."
+    });
     return;
   }
   if (!domainReadAllowed(req.user, rAudit.initialDomainName)) {
@@ -205,9 +216,57 @@ exports.get_audit_status = (req, res) => {
   res.json({ success: true, data: rAudit.status() });
 };
 
+// Bad code methinks. Try refactoring/optimising. Apologies to future developers. This is a temp fix, not permanent.
+// const createCSV = (pages) => {
+//   let output = []
+//   for(let i=0 ; i<pages.length ; i++) {
+    
+//     let page = pages[i];
+//     let url , createdAt , violations;
+    
+//     url = page['url'];
+//     createdAt = page['createdAt'];
+//     violations = page['violations'];
+    
+//     console.log(url , createdAt , violations)
+
+//     for(let i=0 ; i<violations.length ; i++){
+      
+//       let violation = violations[i];
+      
+//       let id , description , impact , nodes;
+      
+//       id = violation.id;
+//       description = violation.description;
+//       impact = violation.impact;
+//       nodes = violation.nodes;
+//       for(let i=0 ; i<nodes.length ; i++){
+//         let node = nodes[i];
+        
+//         let target , html , outputLine;
+        
+//         target = node.target;
+//         html = node.html;
+//         outputLine = {
+//           'url': url,
+//           'createdAt': createdAt,
+//           'id': id,
+//           'description': description,
+//           'impact': impact,
+//           'target': target,
+//           'html': html
+//         }
+//         // console.log(outputLine);
+//         output.push(outputLine);
+//       }
+//     }
+//   }
+//   return output;
+// }
+
 exports.export_audit = async (req, res) => {
   const { auditId } = req.params;
-  if (typeof(auditId) != 'string' || !auditId.match(/^[0-9a-fA-F]{24}$/)) {
+  if (typeof (auditId) != 'string' || !auditId.match(/^[0-9a-fA-F]{24}$/)) {
     res.json({ success: false, error: "Missing or wrong audit id" });
     return;
   }
@@ -239,16 +298,37 @@ exports.export_audit = async (req, res) => {
           delete page._id;
       }
     }
+
+    // Data to be exported.
     const exportData = { audit, domains, pages };
+    // const pages_csv = createCSV(pages);
+
+    // Date+ Time for file naming
     const dateStr = (new Date(audit.dateStarted)).toLocaleDateString()
       .replace(/\//g, '_');
-    const fileName = audit.initialDomainName + '_' + dateStr + '.json.gz';
-    res.attachment(fileName);
-    const buffer = new Buffer.from(JSON.stringify(exportData));
-    const bufferStream = new PassThrough();
-    bufferStream.end(buffer);
-    res.set('Content-Type', 'application/x-gzip');
-    await ppipe(bufferStream, zlib.createGzip(), res);
+
+    const fileName = audit.initialDomainName + '_' + dateStr;
+    const zipExt = '.zip';
+    const jsonExt = '.json';
+    const csvExt = '.csv';
+    
+    res.attachment(fileName + zipExt);
+
+    const buffer_json = new Buffer.from(JSON.stringify(exportData));
+    // const buffer_csv = new Buffer.from(await parseAsync(pages_csv));
+
+    const archive = archiver('zip', {
+      zlib: { level: 9 } // Sets the compression level.
+    });
+
+    // archive.pipe(res);
+    archive.append(buffer_json, { name: fileName + jsonExt});
+    // archive.append(buffer_csv , { name: fileName + csvExt});
+    
+    res.set('Content-Type', 'application/zip');
+    archive.pipe(res);
+    archive.finalize();
+    // await ppipe(archive , zlib.createGzip(), res);
   } catch (err) {
     console.error(err);
     res.set('Content-Type', 'text/plain');
@@ -259,7 +339,7 @@ exports.export_audit = async (req, res) => {
 exports.import_audit = async (req, res) => {
   const { audit, domains, pages } = req.body;
   try {
-    if (typeof(audit) != 'object') {
+    if (typeof (audit) != 'object') {
       res.json({ success: false, error: "Missing or wrong audit" });
       return;
     }
@@ -285,7 +365,7 @@ exports.import_audit = async (req, res) => {
       delete domain._id;
     const savedDomains = await DomainModel.insertMany(domains);
     const newDomainId = {};
-    for (let i=0; i<domains.length; i++)
+    for (let i = 0; i < domains.length; i++)
       newDomainId[domainIds[i]] = savedDomains[i]._id;
     // fix links to domains from audit violationStats
     for (const violation of savedAudit.violationStats.values()) {
@@ -303,7 +383,7 @@ exports.import_audit = async (req, res) => {
       delete page._id;
     const savedPages = await PageModel.insertMany(pages);
     const newPageId = {};
-    for (let i=0; i<pages.length; i++)
+    for (let i = 0; i < pages.length; i++)
       newPageId[pageIds[i]] = savedPages[i]._id;
     // fix links to pages from domain violationStats
     const ops = [];
