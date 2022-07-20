@@ -315,7 +315,7 @@ exports.export_audit = async (req, res) => {
     res.attachment(fileName + zipExt);
 
     const buffer_json = new Buffer.from(JSON.stringify(exportData));
-    // const buffer_csv = new Buffer.from(await parseAsync(pages_csv));
+    const buffer_csv = new Buffer.from(await parseAsync(pages_csv));
 
     const archive = archiver('zip', {
       zlib: { level: 9 } // Sets the compression level.
@@ -323,7 +323,7 @@ exports.export_audit = async (req, res) => {
 
     // archive.pipe(res);
     archive.append(buffer_json, { name: fileName + jsonExt});
-    // archive.append(buffer_csv , { name: fileName + csvExt});
+    archive.append(buffer_csv , { name: fileName + csvExt});
     
     res.set('Content-Type', 'application/zip');
     archive.pipe(res);
