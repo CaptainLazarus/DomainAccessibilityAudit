@@ -217,52 +217,52 @@ exports.get_audit_status = (req, res) => {
 };
 
 // Bad code methinks. Try refactoring/optimising. Apologies to future developers. This is a temp fix, not permanent.
-// const createCSV = (pages) => {
-//   let output = []
-//   for(let i=0 ; i<pages.length ; i++) {
+const createCSV = (pages) => {
+  let output = []
+  for(let i=0 ; i<pages.length ; i++) {
     
-//     let page = pages[i];
-//     let url , createdAt , violations;
+    let page = pages[i];
+    let url , createdAt , violations;
     
-//     url = page['url'];
-//     createdAt = page['createdAt'];
-//     violations = page['violations'];
+    url = page['url'];
+    createdAt = page['createdAt'];
+    violations = page['violations'];
     
-//     console.log(url , createdAt , violations)
+    console.log(url , createdAt , violations)
 
-//     for(let i=0 ; i<violations.length ; i++){
+    for(let i=0 ; i<violations.length ; i++){
       
-//       let violation = violations[i];
+      let violation = violations[i];
       
-//       let id , description , impact , nodes;
+      let id , description , impact , nodes;
       
-//       id = violation.id;
-//       description = violation.description;
-//       impact = violation.impact;
-//       nodes = violation.nodes;
-//       for(let i=0 ; i<nodes.length ; i++){
-//         let node = nodes[i];
+      id = violation.id;
+      description = violation.description;
+      impact = violation.impact;
+      nodes = violation.nodes;
+      for(let i=0 ; i<nodes.length ; i++){
+        let node = nodes[i];
         
-//         let target , html , outputLine;
+        let target , html , outputLine;
         
-//         target = node.target;
-//         html = node.html;
-//         outputLine = {
-//           'url': url,
-//           'createdAt': createdAt,
-//           'id': id,
-//           'description': description,
-//           'impact': impact,
-//           'target': target,
-//           'html': html
-//         }
-//         // console.log(outputLine);
-//         output.push(outputLine);
-//       }
-//     }
-//   }
-//   return output;
-// }
+        target = node.target;
+        html = node.html;
+        outputLine = {
+          'url': url,
+          'createdAt': createdAt,
+          'id': id,
+          'description': description,
+          'impact': impact,
+          'target': target,
+          'html': html
+        }
+        // console.log(outputLine);
+        output.push(outputLine);
+      }
+    }
+  }
+  return output;
+}
 
 exports.export_audit = async (req, res) => {
   const { auditId } = req.params;
@@ -301,7 +301,7 @@ exports.export_audit = async (req, res) => {
 
     // Data to be exported.
     const exportData = { audit, domains, pages };
-    // const pages_csv = createCSV(pages);
+    const pages_csv = createCSV(pages);
 
     // Date+ Time for file naming
     const dateStr = (new Date(audit.dateStarted)).toLocaleDateString()
