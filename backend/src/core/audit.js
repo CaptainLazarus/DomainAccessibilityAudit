@@ -180,7 +180,7 @@ export default class Audit {
     else
       tags = ['wcag2aa', 'wcag2a'];
     
-    console.log("\n\n\nFilepath = " + __dirname+'/axe.js');
+    // console.log("\n\n\nFilepath = " + __dirname+'/axe.js');
     const axeSource = fs.readFileSync(__dirname+'/axe.js', 'utf-8');
     this.aXeB = new AxeBuilder(this.driver , axeSource)
       .options({
