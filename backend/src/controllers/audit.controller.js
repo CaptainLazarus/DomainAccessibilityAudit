@@ -250,10 +250,10 @@ const createCSV = (pages) => {
         outputLine = {
           'url': url,
           'createdAt': createdAt,
-          'id': id,
+          'title': id,
           'description': description,
           'impact': impact,
-          'target': target,
+          'path': target,
           'html': html
         }
         // console.log(outputLine);
