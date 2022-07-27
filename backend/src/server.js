@@ -17,6 +17,7 @@ import domainRoute from './routes/domain.route';
 import pageRoute from './routes/page.route';
 import userRoute from './routes/user.route';
 import groupRoute from './routes/group.route';
+import analyticsRoute from './routes/analytics.route';
 import { initPassport, createGuestGroup, createSuperuserGroup } from './core/permissions';
 
 if (!process.env.ADMIN_PASSWORD)
@@ -48,6 +49,7 @@ app.use('/api/domains', domainRoute);
 app.use('/api/pages', pageRoute);
 app.use('/api/users', userRoute);
 app.use('/api/groups', groupRoute);
+app.use('/api/analytics', analyticsRoute);
 
 // in prod, send non-matched requests to React
 // (React's proxy only works in dev)
